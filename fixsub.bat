@@ -1,4 +1,4 @@
-python C:\shorts\fixsub.py
+python -c "import codecs\nimport os\n\n\ndef get_subtitle_files():\n    '''\n    Returns a list of subtitle files in the current directory.\n    '''\n    subtitle_files = []\n    for file in os.listdir():\n        if file.endswith('.srt'):\n            subtitle_files.append(file)\n    return subtitle_files\n\n\ndef fix_subtitle_file(subtitle_file):\n    '''\n    Fixes the encoding of a subtitle file.\n    '''\n    with codecs.open(subtitle_file, 'r', 'cp1255') as file:\n        text = file.read()\n    with codecs.open(subtitle_file, 'w', 'utf-8') as file:\n        file.write(text)\n\n\ndef fix_subtitles_in_current_dir():\n    subtitle_files = get_subtitle_files()\n    for subtitle_file in subtitle_files:\n        try:\n            fix_subtitle_file(subtitle_file)\n        except UnicodeDecodeError:\n            pass\n\n\nif __name__ == '__main__':\n    fix_subtitles_in_current_dir()\n\n"
 if errorlevel 1 (
     @pause
 )
