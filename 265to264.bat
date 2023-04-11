@@ -1,0 +1,1 @@
+for %%a in ("*.mkv") do ffmpeg.exe -i "%%a" -c:a aac -c:v libx264 "%%~na.mp4"
