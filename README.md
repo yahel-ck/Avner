@@ -6,7 +6,7 @@ Contains the following scripts:
 
 * `fixsub.bat` - Fix Hebrew subtitle encoding.
 * `mp4.bat` - Convert video files to MP4 (his Samsung TV won't play any other format).
-* `x264.bat` - Re-encode a video file to x264.
+* `x264.bat` - Re-encode video files to x264.
 * `matchsubs.bat` - Rename all subtitle files in a directory to match each episode of a series.
 
 To use the scripts, you need to install Python and ffmpeg (make sure they're also added to PATH).
