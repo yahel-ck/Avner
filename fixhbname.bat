@@ -1,4 +1,4 @@
-python "%~dp0fixsub.py"
+python "%~dp0fixhbname.py"
 @if errorlevel 1 (
     @pause
 )
