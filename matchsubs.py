@@ -17,11 +17,11 @@ def rename_subtitle_files():
     srt_files = [f for f in file_names if f.lower().endswith(SUB_FILE_EXT)]
     vid_files = [f for f in file_names if f.lower().endswith(VID_FILE_EXT)]
 
-    srt_markers = dict((find_marker(f), f) for f in srt_files)
+    vid_markers = dict((find_marker(f), f) for f in vid_files)
 
-    for vid_file in vid_files:
-        marker = find_marker(vid_file)
-        srt_file = srt_markers[marker]
+    for srt_file in srt_files:
+        marker = find_marker(srt_file)
+        vid_file = vid_markers[marker]
         base, _ = os.path.splitext(vid_file)
         _, ext = os.path.splitext(srt_file)
         os.rename(srt_file, base + ext)
