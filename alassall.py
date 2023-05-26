@@ -5,15 +5,22 @@ import shutil
 import os.path
 
 
-def fix_subtitles(reference_paths, subtitles_paths):
-    ref_paths = glob.glob(reference_paths)
-    subs_paths = glob.glob(subtitles_paths)
+def fix_subtitles(reference_glob, subtitles_glob):
+    ref_paths = _get_paths(reference_glob)
+    subs_paths = _get_paths(subtitles_glob)
     for subs_path, ref_path in match_episodes(subs_paths, ref_paths):
         backup_file(subs_path)
         subprocess.call(
             ["alass", ref_path, subs_path, subs_path],
             shell=True,
         )
+
+
+def _get_paths(glob_path):
+    paths = glob.glob(glob_path)
+    if len(paths) == 0:
+        raise FileNotFoundError(f"No file(s) found for path {glob_path}")
+    return paths
 
 
 def backup_file(path):
