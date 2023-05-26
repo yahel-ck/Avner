@@ -3,7 +3,7 @@ import re
 from functools import cached_property, reduce
 from os.path import abspath, dirname, join, splitext
 from shutil import copyfile
-from typing import Dict
+from typing import Dict, List
 
 from PTN import parse as parse_torrent_title
 
@@ -26,7 +26,16 @@ class Torrent:
     def get(self, feature: str) -> str:
         return self.info.get(feature, "").lower()
 
-    def similarity(self, other: "Torrent", features=None) -> float:
+    def similarity(self, other: "Torrent", features: List[str] = None) -> float:
+        """
+        Calculates a similarity score ranging from 0 (least similar) to 1 
+        (identical).
+        Returns 0 if the markers are different.
+
+        :param features: Features to compare, ordered by descending importance. 
+        Each feature should be the name of a field from `info`.
+        Defaults to [quality, encoder, network, codec, resolution].
+        """
         if self.name == other.name:
             return 1.0
         if self.marker != other.marker:
