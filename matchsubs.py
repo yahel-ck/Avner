@@ -59,6 +59,10 @@ class Torrent:
 def match_episodes(
     src_names: List[str], dst_names: List[str], ignore_no_match: bool = True
 ):
+    """
+    For each episode in `dst_names`, find a matching episode from `src_names`,
+    if there are multiple matches use the most similar one.
+    """
     src_torrents = map(Torrent, src_names)
     dst_torrents = map(Torrent, dst_names)
     src_markers = _group_by(lambda t: t.marker, src_torrents)
@@ -91,11 +95,13 @@ def find_original_file_names(path: Path, current_file_names: List[str]):
         names_file = _find_original_file_names_file(path)
         if names_file:
             return find_original_file_names(names_file, current_file_names)
-        return max(
-            (list(find_original_file_names(p, current_file_names))
-             for p in path.glob("*.txt")),
-            key=len
-        )
+
+        names = list(list(find_original_file_names(p, current_file_names))
+                     for p in path.glob("*.txt"))
+        if names:
+            return max(names, key=len)
+        else:
+            return []
 
 
 def _find_original_file_names_file(torrent_dir: Path) -> Path:
@@ -117,11 +123,22 @@ def _list_files(dir_path, ext):
     return [f for f in os.listdir(dir_path) if f.lower().endswith(ext)]
 
 
-def rename_subtitle_files(subs_dir=".", vids_dir="."):
+def rename_subtitle_files(
+    subs_dir=".", 
+    vids_dir=".", 
+    quality: str = None, 
+    overwrite: bool = False
+):
     subs_dir = abspath(subs_dir)
     vids_dir = abspath(vids_dir)
     srt_files = _list_files(subs_dir, SUB_FILE_EXT)
     vid_files = _list_files(vids_dir, VID_FILE_EXT)
+
+    if quality:
+        srt_files = filter(
+            lambda n: Torrent(n).get("quality") == quality,
+            srt_files,
+        )
 
     original_file_names = dict(
         find_original_file_names(Path(vids_dir), vid_files))
@@ -129,13 +146,22 @@ def rename_subtitle_files(subs_dir=".", vids_dir="."):
     if len(original_file_names) != len(vid_files):
         original_file_names = dict(((f, f) for f in vid_files))
 
+    errors =[]
     rename = os.rename if subs_dir == vids_dir else copyfile
     for srt_file, vid_file in match_episodes(srt_files, original_file_names.keys()):
         real_vid_file = original_file_names[vid_file]
         print(f"Matched {vid_file} with {srt_file}")
         base, _ = splitext(real_vid_file)
         _, ext = splitext(srt_file)
-        rename(join(subs_dir, srt_file), join(vids_dir, base + ext))
+        dst_path = join(vids_dir, base + ext)
+        if not overwrite and os.path.exists(dst_path):
+            errors.append(f"File {dst_path} already exists!")
+        rename(join(subs_dir, srt_file), dst_path)
+    
+    if errors:
+        for error in errors:
+            print(error)
+        os.system("pause")
 
 
 if __name__ == "__main__":
