@@ -1,5 +1,5 @@
 @echo off
 python "%~dp0matchsubs.py" %*
-if errorlevel 1 (
+@REM if errorlevel 1 (
     pause
-)
+@REM )
