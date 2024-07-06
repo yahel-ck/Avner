@@ -57,11 +57,19 @@ class Torrent:
 
 
 def match_episodes(
-    src_names: List[str], dst_names: List[str], ignore_no_match: bool = True
+    src_names: List[str],
+    dst_names: List[str],
+    ignore_no_match: bool = True,
+    filter_no_match: bool = True,
 ):
     """
     For each episode in `dst_names`, find a matching episode from `src_names`,
     if there are multiple matches use the most similar one.
+    
+    :param ignore_no_match: If False, raise LookupError if no match is found
+    for any name in dst_names.
+    :param filter_no_match: If True, yield (None, dst_name) for any dst name
+    without a match. Ignored if filter_no_match is True.
     """
     src_torrents = map(Torrent, src_names)
     dst_torrents = map(Torrent, dst_names)
@@ -74,9 +82,12 @@ def match_episodes(
                 key=dst_torrent.similarity,
             )
             yield src_torrent.name, dst_torrent.name
-        elif not ignore_no_match:
+        elif ignore_no_match:
+            if not filter_no_match:
+                yield None, dst_torrent.name
+        else:
             raise LookupError(
-                f"No episode match for '{src_torrent.name}' in {dst_names}",
+                f"No episode match for '{dst_torrent.name}' in {src_names}",
             )
 
 
@@ -96,8 +107,10 @@ def find_original_file_names(path: Path, current_file_names: List[str]):
         if names_file:
             return find_original_file_names(names_file, current_file_names)
 
-        names = list(list(find_original_file_names(p, current_file_names))
-                     for p in path.glob("*.txt"))
+        names = list(
+            list(find_original_file_names(p, current_file_names))
+            for p in path.glob("*.txt")
+        )
         if names:
             return max(names, key=len)
         else:
@@ -124,10 +137,11 @@ def _list_files(dir_path, ext):
 
 
 def rename_subtitle_files(
-    subs_dir=".", 
-    vids_dir=".", 
-    quality: str = None, 
-    overwrite: bool = False
+    subs_dir=".",
+    vids_dir=".",
+    quality: str = None,
+    overwrite: bool = False,
+    force: bool = False,
 ):
     subs_dir = abspath(subs_dir)
     vids_dir = abspath(vids_dir)
@@ -140,13 +154,12 @@ def rename_subtitle_files(
             srt_files,
         )
 
-    original_file_names = dict(
-        find_original_file_names(Path(vids_dir), vid_files))
+    original_file_names = dict(find_original_file_names(Path(vids_dir), vid_files))
 
     if len(original_file_names) != len(vid_files):
-        original_file_names = dict(((f, f) for f in vid_files))
+        original_file_names = {f: f for f in vid_files}
 
-    errors =[]
+    errors = []
     rename = os.rename if subs_dir == vids_dir else copyfile
     for srt_file, vid_file in match_episodes(srt_files, original_file_names.keys()):
         real_vid_file = original_file_names[vid_file]
@@ -157,13 +170,19 @@ def rename_subtitle_files(
         if not overwrite and os.path.exists(dst_path):
             errors.append(f"File {dst_path} already exists!")
         rename(join(subs_dir, srt_file), dst_path)
-    
+
     if errors:
         for error in errors:
-            print(error)
+            print(f"ERROR: {error}")
+        print(f"{len(errors)}/{len(original_file_names)} matches failed :(")
+    else:
+        print(f"All {len(original_file_names)} matches finished successfully :)")
+
+    if not force:
         os.system("pause")
 
 
 if __name__ == "__main__":
     import fire
+
     fire.Fire(rename_subtitle_files)
