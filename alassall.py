@@ -5,7 +5,10 @@ import shutil
 import os.path
 
 
-def fix_subtitles(reference_glob, subtitles_glob):
+def fix_subtitles(reference_glob, subtitles_glob, simple_glob=True):
+    if simple_glob:
+        reference_glob = "*".join(map(glob.escape, reference_glob.split("*")))
+        subtitles_glob = "*".join(map(glob.escape, subtitles_glob.split("*")))
     ref_paths = _get_paths(reference_glob)
     subs_paths = _get_paths(subtitles_glob)
     for subs_path, ref_path in match_episodes(subs_paths, ref_paths):
